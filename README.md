@@ -20,6 +20,14 @@ GO111MODULE=off go build bankai.go
 ```
 
 ## Usage & Example
+Generate a Cobalt Strike payload:
+
+<p align="center">
+    <br>
+        <img src=img/cobalt.png>
+    <br>
+</p>
+
 ```
 ./bankai -h                       
 
@@ -78,6 +86,7 @@ All of the work is inspired and done by the following researchers/projects:
 * [go-shellcode](https://github.com/brimstone/go-shellcode) by brimstone
 * [go-shellcode](https://github.com/Ne0nd0g/go-shellcode) by Ne0nd0g
 * [GoPurple](https://github.com/sh4hin/GoPurple) by sh4hin
+* Go Template - https://dev.to/kirklewis/go-text-template-processing-181d
 
 ## Todo
 * Add more shellcode injection technique templates
