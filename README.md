@@ -66,6 +66,12 @@ Generate a Cobalt Strike payload:
     +-----------------------------------------------+------------------+
     | win64_Syscall.tmpl                            |        No        | 
     +-----------------------------------------------+------------------+
+    | win64_CreateThreadpoolWait.tmpl               |        No        | 
+    +-----------------------------------------------+------------------+
+    | win64_EnumerateLoadedModules.tmpl             |        No        | 
+    +-----------------------------------------------+------------------+
+    | win64_EnumChildWindows.tmpl                   |        No        | 
+    +-----------------------------------------------+------------------+
 
     Example:
 
@@ -90,7 +96,12 @@ All of the work is inspired and done by the following researchers/projects:
 * Add more shellcode injection technique templates
 * Add [AlternativeShellcodeExec](https://github.com/S4R1N/AlternativeShellcodeExec) techniques that Ali and Alfaro found
 
-
+## Change Log
+##### 06/02/21
+* Added `win64_CreateThreadpoolWait.tmpl`
+* Added `win64_EnumerateLoadedModules.tmpl`
+* Added `win64_EnumChildWindows.tmpl`
+* Updated some error handling
 
 
 

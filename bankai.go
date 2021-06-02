@@ -233,7 +233,8 @@ func main() {
 
 	_, err = io.WriteString(file, r)
 	if err != nil {
-		fmt.Printf("[ERROR] %s\n", err)
+		fmt.Println("[ERROR] Failed to create template")
+		os.Exit(1)
 	}
 
 	// Compling the output shellcode loader
@@ -265,7 +266,12 @@ func main() {
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	errCmd := cmd.Run()
+	if errCmd != nil {
+		fmt.Println("[ERROR] Failed to compile the payload.")
+		os.Exit(1)
+	}
+
 	fmt.Printf("[INFO] Template: %s\n", tmplSelect)
 	fmt.Printf("[INFO] InputFile: %s\n", inputFile)
 	fmt.Printf("[INFO] OutputFile: %s\n", outputFile)
