@@ -7,11 +7,9 @@
 # Bankai
 Another Go shellcode loader designed to work with Cobalt Strike raw payload. I created this project to mainly educate myself learning Go and directly executing shellcode into the target Windows system using various techniques. 
 
-<b>Encryption</b>
-Implemented a simple payload encryption process (IV --> AES --> XOR --> Base64) that I learned while studying [SLAE32](https://bigb0ss.medium.com/expdev-custom-go-crypter-fb8f9bac0fe8).
+<b>Encryption</b> - I implemented a simple payload encryption process (IV --> AES --> XOR --> Base64) that I learned while studying [SLAE32](https://bigb0ss.medium.com/expdev-custom-go-crypter-fb8f9bac0fe8).
 
-<b>Templates</b>
-Templates are the skeleton scripts to generate a final payload per each technique. 
+<b>Templates</b> - Templates are the skeleton scripts to generate a final payload per each technique. 
 
 ## Installation
 ```
