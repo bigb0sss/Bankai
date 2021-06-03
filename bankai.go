@@ -1,23 +1,16 @@
 package main
 
 import (
-	"bufio"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"encoding/base64"
-	"encoding/hex"
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	math "math/rand"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 
-	"./source/template"
+	"github.com/bigb0sss/Bankai/crypter"
+	"github.com/bigb0sss/Bankai/utils"
 )
 
 const (
@@ -105,87 +98,6 @@ func options() *menu {
 	}
 }
 
-func readFile(inputFile string) string {
-
-	// Write hexdump file from binary file (.bin)
-	dumpFile := "output/shellcode.hexdump"
-
-	f, err := os.Create(dumpFile)
-	if err != nil {
-		fmt.Printf("[ERROR] %s\n", err)
-	}
-	defer f.Close()
-
-	content, err := ioutil.ReadFile(inputFile)
-	if err != nil {
-		fmt.Printf("[ERROR] %s\n", err)
-	}
-
-	binToHex := hex.Dump(content)
-	f.WriteString(binToHex)
-
-	// Read & Parse shellcode
-	file, err := os.Open(dumpFile)
-
-	if err != nil {
-		fmt.Printf("[ERROR] %s\n", err)
-	}
-
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	var txtlines []string
-
-	for scanner.Scan() {
-		txtlines = append(txtlines, scanner.Text())
-	}
-
-	file.Close()
-
-	shellcode := ""
-	for _, eachline := range txtlines {
-		column := eachline[10:58] // Stupid way to parse hexdump
-		noSpace := strings.ReplaceAll(column, " ", "")
-		noNewline := strings.TrimSuffix(noSpace, "\n")
-		shellcode += noNewline
-	}
-
-	return shellcode
-}
-
-// Random Key Generator (128 bit)
-var chars = []rune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-
-func randKeyGen(n int) string {
-
-	charSet := make([]rune, n)
-	for i := range charSet {
-		charSet[i] = chars[math.Intn(len(chars))]
-	}
-	return string(charSet)
-}
-
-// Encrpyt: Original Text --> Add IV --> Encrypt with Key --> Base64 Encode
-func Encrypt(key []byte, text []byte) string {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err)
-	}
-
-	// Creating IV
-	ciphertext := make([]byte, aes.BlockSize+len(text))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		panic(err)
-	}
-
-	// AES Encrpytion Process
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], text)
-
-	// Base64 Encode
-	return base64.URLEncoding.EncodeToString(ciphertext)
-}
-
 func main() {
 
 	opt := options()
@@ -211,15 +123,13 @@ func main() {
 	arch := opt.arch
 	pid := opt.pid
 
-	shellcodeFromFile := readFile(inputFile)
+	shellcodeFromFile := utils.readFile(inputFile)
 
-	// AES Encrypt Process
 	math.Seed(time.Now().UnixNano())
-
-	key := []byte(randKeyGen(32)) //Key Size: 16, 32
+	key := crypter.randKeyGen(32) //Key Size: 16, 32
 	fmt.Printf("[INFO] Key: %v\n", string(key))
 
-	encryptedPayload := Encrypt(key, []byte(shellcodeFromFile))
+	encryptedPayload := crypter.Encrypt([]byte(key), []byte(shellcodeFromFile))
 	fmt.Println("[INFO] AES encrpyting the payload...")
 
 	// Creating an output file with entered shellcode
@@ -231,11 +141,10 @@ func main() {
 
 	// Template creation with shellcode
 	vars := make(map[string]interface{})
-	//vars["Shellcode"] = shellcodeFromFile
 	vars["Shellcode"] = encryptedPayload
 	vars["Key"] = string(key)
 	vars["Pid"] = pid
-	r := template.ProcessFile("templates/"+tmplSelect, vars)
+	r := utils.ProcessFile("templates/"+tmplSelect, vars)
 
 	_, err = io.WriteString(file, r)
 	if err != nil {
