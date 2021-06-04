@@ -1,4 +1,4 @@
-package Read
+package readfile
 
 import (
 	"bufio"
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func readFile(inputFile string) string {
+func ReadShellcode(inputFile string) string {
 
 	// Write hexdump file from binary file (.bin)
 	dumpFile := "output/shellcode.hexdump"

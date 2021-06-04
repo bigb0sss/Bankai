@@ -1,4 +1,4 @@
-package Encrypter
+package crypter
 
 import (
 	"crypto/aes"
@@ -9,7 +9,7 @@ import (
 	math "math/rand"
 )
 
-func randKeyGen(n int) string {
+func RandKeyGen(n int) string {
 
 	// Random Key Generator (128 bit)
 	var chars = []rune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
@@ -23,6 +23,7 @@ func randKeyGen(n int) string {
 
 // Encrpyt: Original Text --> Add IV --> Encrypt with Key --> Base64 Encode
 func Encrypt(key []byte, text []byte) string {
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)

