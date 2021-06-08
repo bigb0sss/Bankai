@@ -26,28 +26,34 @@ const (
     -h            Print this help menu
     -p            PID
 
-    Templates:                                     Last update: 06/02/21
-    +-----------------------------------------------+------------------+
-    | Techniques                                    | Bypass Defender  |
-    +-----------------------------------------------+------------------+
-    | win32_VirtualProtect.tmpl                     |        No        |
-    +-----------------------------------------------+------------------+
-    | win64_CreateFiber.tmpl                        |        No        |
-    +-----------------------------------------------+------------------+
-    | win64_CreateRemoteThreadNative.tmpl           |        Yes       | 
-    +-----------------------------------------------+------------------+
-    | win64_CreateThread.tmpl                       |        No        | 
-    +-----------------------------------------------+------------------+
-    | win64_EtwpCreateEtwThread.tmpl                |        No        | 
-    +-----------------------------------------------+------------------+
-    | win64_Syscall.tmpl                            |        No        | 
-    +-----------------------------------------------+------------------+
-    | win64_CreateThreadpoolWait.tmpl               |        No        | 
-    +-----------------------------------------------+------------------+
-    | win64_EnumerateLoadedModules.tmpl             |        No        | 
-    +-----------------------------------------------+------------------+
-    | win64_EnumChildWindows.tmpl                   |        No        | 
-    +-----------------------------------------------+------------------+
+    Templates:                                        Last update: 06/07/21
+    +--------------------------------------+-----------+------------------+
+    | Techniques                           | PID       | Bypass Defender  |
+    +--------------------------------------+-----------+------------------+
+    | win32_VirtualProtect.tmpl            |           |        No        |
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateFiber.tmpl               |           |        No        |
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateRemoteThreadNative.tmpl  | Required  |        Yes       | 
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateThread.tmpl              |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_EtwpCreateEtwThread.tmpl       |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_Syscall.tmpl                   |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateThreadpoolWait.tmpl      |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_EnumerateLoadedModules.tmpl    |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_EnumChildWindows.tmpl          |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateRemoteThread.tmpl        | Required  |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_RtlCreateUserThread.tmpl       | Required  |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateThreadNative.tmpl        |           |        No        | 
+    +--------------------------------------+-----------+------------------+
 
     Example:
 
@@ -113,7 +119,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if opt.templates == "win64_CreateRemoteThreadNative.tmpl" && opt.pid == 0 {
+	if opt.templates == "win64_CreateRemoteThreadNative.tmpl" || opt.templates == "win64_CreateRemoteThread.tmpl" || opt.templates == "win64_RtlCreateUserThread.tmpl" && opt.pid == 0 {
 		fmt.Println("[ERROR] For this template, you must use PID (-p).")
 		os.Exit(1)
 	}

