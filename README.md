@@ -109,23 +109,3 @@ All of the work is inspired and done by the following researchers/projects:
 * Add more shellcode injection technique templates
 * Add [AlternativeShellcodeExec](https://github.com/S4R1N/AlternativeShellcodeExec) techniques that Ali and Alfaro found
 * Test these shellcodes with modified malleableC2 profiles 
-
-### Change Log
-##### 10/24/21
-* Bug fix 
-  * Fixed broken `-p` flag logic & removed console output when compiling (Thanks to @Simon-Davies)
-
-##### 06/07/21
-* Added `win64_EnumPageFilesW.tmpl`
-* Added `win64_CreateRemoteThread.tmpl`
-* Added `win64_RtlCreateUserThread.tmpl`
-* Added `win64_CreateThreadNative.tmpl`
-
-##### 06/02/21
-* Added `win64_CreateThreadpoolWait.tmpl`
-* Added `win64_EnumerateLoadedModules.tmpl`
-* Added `win64_EnumChildWindows.tmpl`
-* Updated some error handling
-
-
-
