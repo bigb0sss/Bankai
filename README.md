@@ -106,6 +106,6 @@ All of the work is inspired and done by the following researchers/projects:
 * Go Template - https://dev.to/kirklewis/go-text-template-processing-181d
 
 ## Todo
-* Add more shellcode injection technique templates
-* Add [AlternativeShellcodeExec](https://github.com/S4R1N/AlternativeShellcodeExec) techniques that Ali and Alfaro found
-* Test these shellcodes with modified malleableC2 profiles 
+[ ] Add [AlternativeShellcodeExec](https://github.com/S4R1N/AlternativeShellcodeExec) techniques that Ali and Alfaro found
+[ ] Test these shellcodes with modified malleableC2 profiles 
+[ ] Add [BananaPhone](https://github.com/C-Sto/BananaPhone) for templates
