@@ -15,13 +15,13 @@ import (
 )
 
 const (
-	usage = ` 
+	usage = `
     Required:
     -i            Binary File (e.g., beacon.bin)
     -o            Payload Output (e.g, payload.exe)
     -t            Payload Template (e.g., win32_VirtualProtect.tmpl)
     -a            Arch (32|64)
-    
+
     Optional:
     -h            Print this help menu
     -p            PID
@@ -34,25 +34,25 @@ const (
     +--------------------------------------+-----------+------------------+
     | win64_CreateFiber.tmpl               |           |        No        |
     +--------------------------------------+-----------+------------------+
-    | win64_CreateRemoteThreadNative.tmpl  | Required  |        Yes       | 
+    | win64_CreateRemoteThreadNative.tmpl  | Required  |        Yes       |
     +--------------------------------------+-----------+------------------+
-    | win64_CreateThread.tmpl              |           |        No        | 
+    | win64_CreateThread.tmpl              |           |        No        |
     +--------------------------------------+-----------+------------------+
-    | win64_EtwpCreateEtwThread.tmpl       |           |        No        | 
+    | win64_EtwpCreateEtwThread.tmpl       |           |        No        |
     +--------------------------------------+-----------+------------------+
-    | win64_Syscall.tmpl                   |           |        No        | 
+    | win64_Syscall.tmpl                   |           |        No        |
     +--------------------------------------+-----------+------------------+
-    | win64_CreateThreadpoolWait.tmpl      |           |        No        | 
+    | win64_CreateThreadpoolWait.tmpl      |           |        No        |
     +--------------------------------------+-----------+------------------+
-    | win64_EnumerateLoadedModules.tmpl    |           |        No        | 
+    | win64_EnumerateLoadedModules.tmpl    |           |        No        |
     +--------------------------------------+-----------+------------------+
-    | win64_EnumChildWindows.tmpl          |           |        No        | 
+    | win64_EnumChildWindows.tmpl          |           |        No        |
     +--------------------------------------+-----------+------------------+
-    | win64_CreateRemoteThread.tmpl        | Required  |        No        | 
+    | win64_CreateRemoteThread.tmpl        | Required  |        No        |
     +--------------------------------------+-----------+------------------+
-    | win64_RtlCreateUserThread.tmpl       | Required  |        No        | 
+    | win64_RtlCreateUserThread.tmpl       | Required  |        No        |
     +--------------------------------------+-----------+------------------+
-    | win64_CreateThreadNative.tmpl        |           |        No        | 
+    | win64_CreateThreadNative.tmpl        |           |        No        |
     +--------------------------------------+-----------+------------------+
 
     Example:
@@ -63,14 +63,14 @@ const (
 
 func banner() {
 	banner := `
-     _                 _         _ 
+     _                 _         _
     | |               | |       (_)
-    | |__   __ _ _ __ | | ____ _ _ 
+    | |__   __ _ _ __ | | ____ _ _
     | '_ \ / _' | '_ \| |/ / _' | |
     | |_) | (_| | | | |   < (_| | |
     |_.__/ \__,_|_| |_|_|\_\__,_|_|
                         [bigb0ss]
-	
+
     [INFO] Another Go Shellcode Loader
 `
 	fmt.Println(banner)
@@ -128,7 +128,7 @@ func main() {
 	if opt.templates == "win64_CreateRemoteThreadNative.tmpl" && opt.pid == 0 || opt.templates == "win64_CreateRemoteThread.tmpl" && opt.pid == 0 || opt.templates == "win64_RtlCreateUserThread.tmpl" && opt.pid == 0 {
 		fmt.Println("[ERROR] For this template, you must use PID (-p).")
 		os.Exit(1)
-	
+	}
 
 	inputFile := opt.input
 	outputFile := opt.output
@@ -172,8 +172,8 @@ func main() {
 	cmd := exec.Command(
 		"go",
 		"build",
-		"-ldflags=-s", // Using -s instructs Go to create the smallest output
-		"-ldflags=-w", // Using -w instructs Go to create the smallest output
+		"-ldflags=-s",            // Using -s instructs Go to create the smallest output
+		"-ldflags=-w",            // Using -w instructs Go to create the smallest output
 		"-ldflags=-H=windowsgui", // hide console window - (10-24-21) Credit: @Simon-Davies
 		"-o", outputFile,
 		"output/shellcode.go",
